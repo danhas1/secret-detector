@@ -15,6 +15,8 @@ import {
 import type { ScanResponse, ScanState } from "../types";
 import Results from "./Results";
 
+const API_BASE = "http://100.30.237.68:8000";
+
 const DEMO_SNIPPET = `# config.py — do NOT commit this file
 AWS_ACCESS_KEY_ID = "AKIAIOSFODNN7EXAMPLE"
 AWS_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
@@ -155,7 +157,7 @@ export default function Scanner() {
   }
 
   async function fetchRepoScan(url: string): Promise<ScanResponse> {
-    const res = await fetch("/api/scan-repo", {
+    const res = await fetch(`${API_BASE}/scan-repo`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ repo_url: resolveGithubUrl(url) }),
@@ -182,7 +184,7 @@ export default function Scanner() {
       } else if (file) {
         form.append("file", file);
       }
-      const res = await fetch("/api/scan", { method: "POST", body: form });
+      const res = await fetch(`${API_BASE}/scan`, { method: "POST", body: form });
       clearInterval(interval);
       await finalize(res);
     } catch (e) {

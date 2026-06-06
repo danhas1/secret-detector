@@ -1,5 +1,6 @@
 import os
 import shutil
+import subprocess
 import tempfile
 import time
 from typing import List, Optional
@@ -118,6 +119,72 @@ async def scan(
         results=[_to_finding(r) for r in results],
         risk_score=_compute_risk_score(results),
         total_secrets=len(results),
+        high_confidence=high_count,
+        medium_confidence=medium_count,
+        scan_time_ms=round(elapsed_ms, 2),
+        lines_scanned=lines_scanned,
+    )
+
+
+class RepoScanRequest(BaseModel):
+    repo_url: str
+
+
+@app.post("/scan-repo", response_model=ScanResponse)
+async def scan_repo(body: RepoScanRequest):
+    repo_url = body.repo_url.strip()
+    if not repo_url:
+        raise HTTPException(status_code=400, detail="repo_url is required.")
+
+    t0 = time.perf_counter()
+    clone_dir: Optional[str] = None
+
+    try:
+        clone_dir = tempfile.mkdtemp()
+        result = subprocess.run(
+            ["git", "clone", "--depth", "1", repo_url, clone_dir],
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        if result.returncode != 0:
+            raise HTTPException(
+                status_code=422,
+                detail=f"git clone failed: {result.stderr.strip()}",
+            )
+
+        all_results: list[dict] = []
+        lines_scanned = 0
+
+        for root, _dirs, files in os.walk(clone_dir):
+            # skip .git internals
+            _dirs[:] = [d for d in _dirs if d != ".git"]
+            for fname in files:
+                fpath = os.path.join(root, fname)
+                try:
+                    with open(fpath, "r", encoding="utf-8", errors="replace") as fh:
+                        lines_scanned += len(fh.read().splitlines())
+                    file_results = scan_file(fpath)
+                    all_results.extend(file_results)
+                except Exception:
+                    continue
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    finally:
+        if clone_dir and os.path.exists(clone_dir):
+            shutil.rmtree(clone_dir, ignore_errors=True)
+
+    elapsed_ms = (time.perf_counter() - t0) * 1000
+    high_count = sum(1 for r in all_results if r.get("confidence") == "HIGH")
+    medium_count = sum(1 for r in all_results if r.get("confidence") == "MEDIUM")
+
+    return ScanResponse(
+        results=[_to_finding(r) for r in all_results],
+        risk_score=_compute_risk_score(all_results),
+        total_secrets=len(all_results),
         high_confidence=high_count,
         medium_confidence=medium_count,
         scan_time_ms=round(elapsed_ms, 2),
