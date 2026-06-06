@@ -2,7 +2,7 @@ import re
 import os
 from typing import List, Dict, Tuple
 
-# ─── Regex Patterns ────────────────────────────────────────────────────────────
+# Regex Patterns 
 REGEX_PATTERNS: List[Tuple[str, str, str, str]] = [
     # (pattern, type, confidence, description)
     (r'AKIA[0-9A-Z]{16}', "AWS_KEY", "HIGH", "AWS Access Key ID"),
@@ -27,7 +27,7 @@ REGEX_PATTERNS: List[Tuple[str, str, str, str]] = [
     (r'[a-zA-Z0-9_\-\.]+@[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}:[^\s]{8,}', "CREDENTIALS", "MEDIUM", "Email:Password Pair"),
 ]
 
-# ─── ML Setup ──────────────────────────────────────────────────────────────────
+# ML Setup
 try:
     from sklearn.feature_extraction.text import TfidfVectorizer
     from sklearn.linear_model import LogisticRegression
