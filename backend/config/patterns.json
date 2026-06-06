@@ -1,0 +1,7 @@
+{
+  "AWS_KEY": "AKIA[0-9A-Z]{16}",
+  "GITHUB_TOKEN": "ghp_[A-Za-z0-9]{36}",
+  "JWT": "eyJ[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+",
+  "DB_URI": "mongodb:\\/\\/[^\\s]+|postgres:\\/\\/[^\\s]+",
+  "PASSWORD": "(password|pwd|secret)\\s*=\\s*['\"].+['\"]"
+}
