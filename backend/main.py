@@ -8,7 +8,7 @@ from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from scanner import scan_file
+from scanner.scanner import scan_file
 
 app = FastAPI(title="SecretScanner API", version="1.0.0")
 
